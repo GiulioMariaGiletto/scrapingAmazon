@@ -8,21 +8,22 @@ from Prodotto import Prodotto
 prodotti = []
 global donny
 global pickprod
+results = []
 def main():
 
     driver = webdriver.Chrome()
     pickprod = input(" Select a product: ")
-    for page in range(1, 21):
+    for page in range(1, 3):
         if page == 1:
             url = get_url(pickprod)
             driver.get(url)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            results = soup.find_all('div', {'data-component-type': 's-search-result'})
+            results.append(soup.find_all('div', {'data-component-type': 's-search-result'}))
         else:
             url = turn_page(pickprod, page)
             driver.get(url)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            results = soup.find_all('div', {'data-component-type': 's-search-result'})
+            results.append(soup.find_all('div', {'data-component-type': 's-search-result'}))
 
 
 
@@ -41,7 +42,11 @@ def extract_record(item):
     if type(item) == 'NoneType':
         return
     atag = item.h2.a
-    titolo = atag.text
+    try:
+        item.h2
+        titolo = atag.text
+    except AttributeError:
+        return
     url = 'https://www.amazon.com/' + atag.get('href')
     try:
         price_parent = item.find('span', 'a-price')
@@ -89,10 +94,8 @@ def get_url(string):
 def turn_page(string, page):
     if " " in string:
         string = string.replace(' ', '+')
-    base = 'https://www.amazon.com/s?k='+string+'&page={a}&crid=CIO0PKVSSOAI&qid=1677448063&sprefix='+string+'%2Caps%2C482&ref=sr_pg_{b}'
-    newy = base.format(a = page)
-    newy = newy.format(b = page)
-
+    base = 'https://www.amazon.com/s?k={prodotto}&page={a}&crid=CIO0PKVSSOAI&qid=1677448063&sprefix={prodotto}%2Caps%2C482&ref=sr_pg_{b}'
+    newy = base.format(prodotto = string, a = page, b = page)
     return newy
 
 
