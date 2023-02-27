@@ -12,7 +12,7 @@ class Prodotto :
         return super().__hash__()
 
     def __str__(self) -> str:
-        return self.titolo
+        return self.titolo+' '+self.prezzo+' '+self.url+' '+self.rating+' '+self.nReview
 
     def __eq__(self, o: object) -> bool:
         return super().__eq__(o)

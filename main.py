@@ -18,38 +18,40 @@ def main():
             url = get_url(pickprod)
             driver.get(url)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            results.append(soup.find_all('div', {'data-component-type': 's-search-result'}))
+            results = soup.find_all('div', {'data-component-type': 's-search-result'})
+            for item in results:
+                extract_record(item)
         else:
             url = turn_page(pickprod, page)
             driver.get(url)
             soup = BeautifulSoup(driver.page_source, 'html.parser')
-            results.append(soup.find_all('div', {'data-component-type': 's-search-result'}))
+            results = soup.find_all('div', {'data-component-type': 's-search-result'})
+            for item in results:
+                extract_record(item)
+
+    generate_excel(pickprod)
+    driver.close()
+    #for prod in prodotti:
+     #   print(prod)
 
 
-
-
-    for item in results:
-        extract_record(item)
-    print(len(results))
-
-    for prod in prodotti:
-        print(prod)
 
     return
 
 
-def extract_record(item):
-    if type(item) == 'NoneType':
-        return
-    atag = item.h2.a
-    try:
-        item.h2
-        titolo = atag.text
-    except AttributeError:
-        return
+def extract_record(ci):
+
+
+
+    atag = ci.h2.a
+    titolo = atag.text.strip()
+    print(atag.text)
+
+
+
     url = 'https://www.amazon.com/' + atag.get('href')
     try:
-        price_parent = item.find('span', 'a-price')
+        price_parent = ci.find('span', 'a-price')
         price_parent = price_parent.find('span', 'a-offscreen')
         prezzo = float(price_parent.text.replace('$', ''))
         print(price_parent.text)
@@ -57,17 +59,17 @@ def extract_record(item):
         return
 
     try:
-        if item.i.text[0:3] == '':
+        if ci.i.text[0:3] == '':
             rating = 0.0
         else:
-            rating = float(item.i.text[0:3])
+            rating = float(ci.i.text[0:3])
     except AttributeError:
         rating = 0.0
     print(rating)
 
     try:
-        print(item.i.text)
-        review_count = item.find('span', {'class': 'a-size-base s-underline-text'}).text
+        print(ci.i.text)
+        review_count = ci.find('span', {'class': 'a-size-base s-underline-text'}).text
         r1 = review_count.replace('(', '')
         r1 = r1.replace(')', '')
         r1 = float(r1.replace(',', '.'))
@@ -76,11 +78,22 @@ def extract_record(item):
     prod = Prodotto(titolo, prezzo, url, rating, r1)
     prodotti.append(prod)
 
+
     return
 
 def sorting_product(List):
-    prodotti.sort(Prodotto.punteggio)
+    migliori_prodotti = prodotti.sort(Prodotto.punteggio)
+    return migliori_prodotti
+
+
+def generate_excel(string):
+    with open(string+'.csv', 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Titolo', 'Prezzo','url', 'Rating', 'nReview'])
+        writer.writerows(results)
     return
+
+
 
 
 def get_url(string):
